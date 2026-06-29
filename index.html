@@ -3,16 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>智能家居儀表板 - 溫馨日系版</title>
+  <title>智能家居儀表板 - 深色日系版</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    /* 注入溫柔嘅日系圓潤字體 */
     @import url('https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700&display=swap');
     
     body { 
-      background-color: #F9F8F6; /* 燕麥米白色背景 */
-      font-family: 'Zen Maru Gothic', sans-serif; /* 圓潤字體 */
-      color: #5C544D; /* 深咖啡色文字 */
+      background-color: #282421; /* 深焙咖啡色背景 */
+      font-family: 'Zen Maru Gothic', sans-serif; 
+      color: #EAE6DF; /* 燕麥白文字 */
     }
     @keyframes ticker {
       0% { transform: translate3d(0, 0, 0); }
@@ -30,41 +29,45 @@
 </head>
 <body class="min-h-screen flex flex-col justify-between overflow-hidden select-none">
 
+  <!-- 主體內容區 -->
   <div class="p-5 md:p-8 flex-1 grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 pb-20">
     
-    <div class="bg-white rounded-3xl p-8 flex flex-col justify-between shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] border border-[#EAE6DF]">
+    <!-- 左邊：時間與即時天氣 -->
+    <div class="bg-[#36302B] rounded-3xl p-8 flex flex-col justify-between shadow-2xl border border-[#4A433D]">
       <div>
         <div class="text-[#B3A99F] text-sm font-bold tracking-widest mb-3">TODAY</div>
-        <div id="current-time" class="text-6xl md:text-7xl font-bold text-[#4A4238] tracking-tight">--:-- --</div>
-        <div id="current-date" class="text-base text-[#8C8377] mt-3 font-medium">----/--/-- ---</div>
+        <div id="current-time" class="text-6xl md:text-7xl font-bold text-[#F9F8F6] tracking-tight">--:-- --</div>
+        <div id="current-date" class="text-base text-[#B3A99F] mt-3 font-medium">----/--/-- ---</div>
       </div>
 
       <div class="mt-10 space-y-5">
         <div class="flex items-center justify-between">
-          <span class="text-[#8C8377] text-lg">氣溫</span>
-          <span id="weather-temp" class="text-4xl font-bold text-[#4A4238]">-- °C</span>
+          <span class="text-[#B3A99F] text-lg">氣溫</span>
+          <span id="weather-temp" class="text-4xl font-bold text-[#F9F8F6]">-- °C</span>
         </div>
         <div class="flex items-center justify-between">
-          <span class="text-[#8C8377] text-lg">濕度</span>
-          <span id="weather-humidity" class="text-3xl font-bold text-[#6D8F71]">-- %</span>
+          <span class="text-[#B3A99F] text-lg">濕度</span>
+          <span id="weather-humidity" class="text-3xl font-bold text-[#8BA88E]">-- %</span>
         </div>
         <div class="flex items-center justify-between">
-          <span class="text-[#8C8377] text-lg">紫外線</span>
+          <span class="text-[#B3A99F] text-lg">紫外線</span>
           <span id="weather-uv" class="text-2xl font-bold text-[#D4A373]">--</span>
         </div>
-        <div class="flex items-center justify-between border-t border-[#F0EBE1] pt-4">
-          <span class="text-[#8C8377] text-lg">降雨</span>
-          <span id="weather-rain" class="text-2xl font-bold text-[#6D8F71]">--</span>
+        <div class="flex items-center justify-between border-t border-[#4A433D] pt-4">
+          <span class="text-[#B3A99F] text-lg">降雨</span>
+          <span id="weather-rain" class="text-2xl font-bold text-[#8BA88E]">--</span>
         </div>
       </div>
     </div>
 
-    <div class="bg-white rounded-3xl p-8 flex flex-col shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] border border-[#EAE6DF] overflow-hidden">
+    <!-- 右邊：香港電台即時新聞區塊 -->
+    <div class="bg-[#36302B] rounded-3xl p-8 flex flex-col shadow-2xl border border-[#4A433D] overflow-hidden">
       <div class="flex justify-between items-center mb-6">
         <div class="text-[#B3A99F] text-sm font-bold tracking-widest">RTHK NEWS</div>
-        <div class="text-xs bg-[#D4A373] text-white px-3 py-1 rounded-full font-bold animate-pulse">即時</div>
+        <div class="text-xs bg-[#D4A373] text-[#282421] px-3 py-1 rounded-full font-bold animate-pulse">即時</div>
       </div>
       
+      <!-- 新聞列表容器 -->
       <div id="news-list" class="flex-1 flex flex-col space-y-5 overflow-y-auto no-scrollbar">
         <div class="flex items-center justify-center h-full">
           <span class="text-[#B3A99F]">正在讀取新聞...</span>
@@ -74,15 +77,17 @@
 
   </div>
 
-  <div class="bg-[#EFECE5] border-t border-[#EAE6DF] fixed bottom-0 left-0 w-full py-4 z-50">
+  <!-- 底部：走馬燈 -->
+  <div class="bg-[#2C2824] border-t border-[#4A433D] fixed bottom-0 left-0 w-full py-4 z-50">
     <div class="relative w-full flex items-center overflow-hidden">
-      <span class="absolute left-0 bg-[#EFECE5] text-[#8C8377] font-bold px-5 py-1 text-sm z-10 shadow-[4px_0_10px_rgba(239,236,229,1)]">最新消息</span>
-      <div class="ticker-track text-base text-[#5C544D] font-medium" id="news-ticker">
-        • 溫馨日系面板已套用 • 正在為您更新即時港聞摘要...
+      <span class="absolute left-0 bg-[#2C2824] text-[#B3A99F] font-bold px-5 py-1 text-sm z-10 shadow-[4px_0_10px_rgba(44,40,36,1)]">最新消息</span>
+      <div class="ticker-track text-base text-[#EAE6DF] font-medium" id="news-ticker">
+        • 深色日系面板已套用 • 正在為您更新即時港聞摘要...
       </div>
     </div>
   </div>
 
+  <!-- 模組 1：時鐘系統 -->
   <script>
     function updateClock() {
       try {
@@ -99,6 +104,7 @@
     setInterval(updateClock, 1000); updateClock();
   </script>
 
+  <!-- 模組 2：天氣系統 -->
   <script>
     async function fetchWeather() {
       try {
@@ -114,7 +120,7 @@
             rainLabel.className = "text-2xl font-bold text-[#D4A373]";
           } else {
             rainLabel.innerText = "無雨 0mm";
-            rainLabel.className = "text-2xl font-bold text-[#6D8F71]";
+            rainLabel.className = "text-2xl font-bold text-[#8BA88E]";
           }
           if(data.daily && data.daily.uv_index_max) {
             const uv = Math.round(data.daily.uv_index_max[0]);
@@ -132,6 +138,7 @@
     setInterval(fetchWeather, 60000); fetchWeather();
   </script>
 
+  <!-- 模組 3：香港電台 (RTHK) 新聞系統 -->
   <script>
     async function fetchHKNews() {
       try {
@@ -147,8 +154,8 @@
             const timeString = `${String(pubTime.getHours()).padStart(2, '0')}:${String(pubTime.getMinutes()).padStart(2, '0')}`;
             
             newsHtml += `
-              <div class="border-b border-[#F0EBE1] pb-4 last:border-0">
-                <div class="text-[#4A4238] text-base md:text-lg font-bold leading-relaxed mb-2">${item.title}</div>
+              <div class="border-b border-[#4A433D] pb-4 last:border-0">
+                <div class="text-[#F9F8F6] text-base md:text-lg font-bold leading-relaxed mb-2">${item.title}</div>
                 <div class="text-[#A3998F] text-xs flex items-center font-medium">
                   <span class="inline-block w-1.5 h-1.5 bg-[#D4A373] rounded-full mr-2"></span>
                   更新時間: ${timeString}
