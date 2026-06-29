@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>智能家居儀表板 - 24小時不夜城版</title>
+  <title>智能家居儀表板 - 極致穩定版</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700&display=swap');
@@ -32,8 +32,7 @@
       </div>
 
       <div class="flex flex-col items-center justify-center my-8 z-10 relative">
-        <div id="weather-icon-container" class="flex justify-center items-center h-32 w-32">
-          </div>
+        <div id="weather-icon-container" class="flex justify-center items-center h-32 w-32"></div>
         <span id="weather-temp" class="text-7xl font-bold text-[#F9F8F6] mt-6 tracking-tighter">-- °C</span>
         <span id="weather-source" class="text-xs text-[#B3A99F] mt-2 tracking-widest">連接天文台系統中...</span>
       </div>
@@ -75,7 +74,7 @@
   </div>
 
   <script>
-    // 1. 時間與日夜圖標 (月亮已轉為黃色)
+    // 1. 時間與日夜圖標 (黃色月亮)
     function updateClockAndIcon() {
       try {
         const now = new Date();
@@ -92,7 +91,6 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
             </svg>`;
         } else {
-          // 修改：將月亮顏色轉為暖黃色 (#F4D03F)
           iconContainer.innerHTML = `
             <svg class="w-28 h-28 text-[#F4D03F] drop-shadow-lg animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
@@ -102,39 +100,15 @@
     }
     setInterval(updateClockAndIcon, 1000); updateClockAndIcon();
 
-    // 通用抓取函數 (雙重代理防護)
-    async function fetchWithProxy(targetUrl) {
-      const url1 = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
-      const url2 = `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}`;
-      
-      try {
-        let res = await fetch(url1, { cache: 'no-store' });
-        if(!res.ok) throw new Error();
-        let data = await res.json();
-        return data.contents;
-      } catch(e) {
-        let res2 = await fetch(url2, { cache: 'no-store' });
-        return await res2.text();
-      }
-    }
-
-    // 2. 香港天文台數據 (高強度連線)
+    // 2. 乾淨直接版：香港天文台天氣 (無中轉站)
     async function fetchWeather() {
       try {
+        // 直接讀取，加上時間戳防止瀏覽器舊資料
         const hkoUrl = `https://data.weather.gov.hk/weatherAPI/opendata/weather.do?dataType=rhrread&lang=tc&_=${Date.now()}`;
-        let rawData;
+        const res = await fetch(hkoUrl, { cache: 'no-store' });
         
-        try {
-          // 先嘗試直連
-          let directRes = await fetch(hkoUrl, { cache: 'no-store' });
-          if(!directRes.ok) throw new Error();
-          rawData = JSON.stringify(await directRes.json());
-        } catch(e) {
-          // 失敗則啟用代理
-          rawData = await fetchWithProxy(hkoUrl);
-        }
-
-        const data = JSON.parse(rawData);
+        if (!res.ok) throw new Error('HKO Network Error');
+        const data = await res.json();
         
         if(data && data.temperature && data.temperature.data) {
           let myStation = data.temperature.data.find(t => t.place === '觀塘') || data.temperature.data[0];
@@ -149,33 +123,38 @@
           if(data.uvindex && data.uvindex.data.length > 0) uv = data.uvindex.data[0].value;
           document.getElementById('weather-uv').innerText = uv > 0 ? `${uv} (高)` : '0 (低)';
           document.getElementById('weather-uv').className = uv > 0 ? "text-xl font-bold text-[#D4A373]" : "text-xl font-bold text-[#8BA88E]";
+        } else {
+          throw new Error('Empty Data');
         }
       } catch (e) {
-        document.getElementById('weather-source').innerText = "數據同步中，請稍候...";
+        document.getElementById('weather-source').innerText = "天文台數據同步中...";
       }
     }
     setInterval(fetchWeather, 60000); fetchWeather();
 
-    // 3. 24小時綜合新聞 (Google News HK - 包含各大媒體)
+    // 3. 乾淨直接版：24小時綜合新聞 (Google News HK 官方解析)
     async function fetchHKNews() {
       try {
-        const rssUrl = `https://news.google.com/rss/headlines/section/geo/HK?hl=zh-HK&gl=HK&ceid=HK:zh-Hant&_=${Date.now()}`;
-        const xmlText = await fetchWithProxy(rssUrl);
+        // 利用 RSS2JSON 官方解析 Google News，加上緩存破解
+        const cb = Math.floor(Date.now() / 300000); // 5分鐘更新一次網址
+        const feedUrl = `https://news.google.com/rss/headlines/section/geo/HK?hl=zh-HK&gl=HK&ceid=HK:zh-Hant&cb=${cb}`;
+        const apiUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feedUrl)}`;
         
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(xmlText, "text/xml");
-        const items = doc.querySelectorAll("item");
+        const res = await fetch(apiUrl);
+        if (!res.ok) throw new Error('News Network Error');
+        const data = await res.json();
         
-        if (items.length > 0) {
+        if (data.status === 'ok' && data.items && data.items.length > 0) {
           let newsHtml = '', ticker = '';
+          const topNews = data.items.slice(0, 4);
           
-          for(let i = 0; i < Math.min(4, items.length); i++) {
-            // 清理標題 (移除過長的媒體名稱後綴)
-            let rawTitle = items[i].querySelector("title").textContent;
-            let cleanTitle = rawTitle.split(' - ')[0]; 
-            let source = rawTitle.split(' - ')[1] || '綜合新聞';
+          topNews.forEach(item => {
+            // 分離標題同來源
+            let titleParts = item.title.split(' - ');
+            let cleanTitle = titleParts[0];
+            let source = titleParts.length > 1 ? titleParts[titleParts.length - 1] : '新聞';
 
-            const d = new Date(items[i].querySelector("pubDate").textContent);
+            const d = new Date(item.pubDate);
             let timeStr = !isNaN(d.getTime()) ? `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}` : '';
 
             newsHtml += `
@@ -189,13 +168,15 @@
                   <span class="text-[#8BA88E] opacity-80">${source}</span>
                 </div>
               </div>`;
-          }
+          });
           document.getElementById('news-list').innerHTML = newsHtml;
           
-          for(let i = 0; i < Math.min(8, items.length); i++) { 
-            ticker += `• ${items[i].querySelector("title").textContent.split(' - ')[0]} 　　`; 
-          }
+          data.items.slice(0, 8).forEach(item => { 
+            ticker += `• ${item.title.split(' - ')[0]} 　　`; 
+          });
           document.getElementById('news-ticker').innerHTML = `<span>${ticker}</span><span>${ticker}</span>`;
+        } else {
+          throw new Error('No News Data');
         }
       } catch (e) {
         document.getElementById('news-list').innerHTML = '<div class="text-[#D4A373] mt-4">正在載入最新新聞...</div>';
