@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>智能家居儀表板 - 終極穩定版</title>
+  <title>智能家居儀表板 - 天文台實時版</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700&display=swap');
@@ -12,12 +12,12 @@
     @keyframes ticker { 0% { transform: translate3d(0, 0, 0); } 100% { transform: translate3d(-100%, 0, 0); } }
     .ticker-track { display: inline-block; white-space: nowrap; padding-left: 100%; animation: ticker 90s linear infinite; }
     
+    /* 太陽慢速自轉 */
     @keyframes wabi-sabi-spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     .animate-sun-slow { animation: wabi-sabi-spin 30s linear infinite; }
 
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-    .pixel-font { font-family: 'Courier New', Courier, monospace; font-weight: bold; }
   </style>
 </head>
 <body class="min-h-screen flex flex-col overflow-x-hidden select-none pb-16">
@@ -33,13 +33,10 @@
       </div>
 
       <div class="flex flex-col items-center justify-center my-8 z-10 relative">
-        <div class="animate-sun-slow origin-center">
-          <svg class="w-32 h-32 text-[#D4A373] drop-shadow-lg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-          </svg>
-        </div>
+        <div id="weather-icon-container" class="flex justify-center items-center h-32 w-32">
+          </div>
         <span id="weather-temp" class="text-7xl font-bold text-[#F9F8F6] mt-6 tracking-tighter">-- °C</span>
-        <span id="weather-source" class="text-xs text-[#B3A99F] mt-2 tracking-widest">載入中...</span>
+        <span id="weather-source" class="text-xs text-[#B3A99F] mt-2 tracking-widest">載入天文台數據中...</span>
       </div>
 
       <div class="flex justify-between items-center bg-[#2C2824] p-4 rounded-2xl z-10 relative border border-[#4A433D]">
@@ -74,107 +71,101 @@
   <div class="bg-[#2C2824] border-t border-[#4A433D] fixed bottom-0 left-0 w-full py-4 z-50">
     <div class="relative w-full flex items-center overflow-hidden">
       <span class="absolute left-0 bg-[#2C2824] text-[#B3A99F] font-bold px-5 py-1 text-sm z-10 shadow-[4px_0_10px_rgba(44,40,36,1)]">最新消息</span>
-      <div class="ticker-track text-base text-[#EAE6DF] font-medium" id="news-ticker">• 系統同步中...</div>
+      <div class="ticker-track text-base text-[#EAE6DF] font-medium" id="news-ticker">• 系統正在同步資訊...</div>
     </div>
   </div>
 
   <script>
-    // 1. 時間功能
-    function updateClock() {
+    // 1. 時間與日夜圖標自動切換
+    function updateClockAndIcon() {
       try {
         const now = new Date();
         const optionsDate = { year: 'numeric', month: '2-digit', day: '2-digit', weekday: 'short' };
         let hours = now.getHours(), minutes = String(now.getMinutes()).padStart(2, '0'), ampm = hours >= 12 ? 'PM' : 'AM';
-        hours = hours % 12 || 12; 
-        document.getElementById('current-time').innerText = `${hours}:${minutes} ${ampm}`;
+        
+        // 更新時鐘
+        document.getElementById('current-time').innerText = `${hours % 12 || 12}:${minutes} ${ampm}`;
         document.getElementById('current-date').innerText = now.toLocaleDateString('zh-HK', optionsDate).toUpperCase();
+
+        // 判斷日夜更換 Icon (早上6點至傍晚6點為太陽，其餘為月亮)
+        const iconContainer = document.getElementById('weather-icon-container');
+        if (hours >= 6 && hours < 18) {
+          iconContainer.innerHTML = `
+            <svg class="w-32 h-32 text-[#D4A373] drop-shadow-lg animate-sun-slow origin-center" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+            </svg>`;
+        } else {
+          iconContainer.innerHTML = `
+            <svg class="w-28 h-28 text-[#EAE6DF] drop-shadow-lg animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+            </svg>`;
+        }
       } catch(e) {}
     }
-    setInterval(updateClock, 1000); updateClock();
+    setInterval(updateClockAndIcon, 1000); updateClockAndIcon();
 
-    // 2. 天氣功能 (強效防禦機制)
+    // 2. 100% 堅持使用香港天文台數據
     async function fetchWeather() {
       try {
-        let temp = '--', hum = '--', uv = 0, sourceText = '';
+        const res = await fetch('https://data.weather.gov.hk/weatherAPI/opendata/weather.do?dataType=rhrread&lang=tc');
+        const data = await res.json();
         
-        try {
-          const res = await fetch('https://data.weather.gov.hk/weatherAPI/opendata/weather.do?dataType=rhrread&lang=tc');
-          if (!res.ok) throw new Error('HKO Error');
-          const data = await res.json();
-          
-          if(data && data.temperature && data.temperature.data && data.temperature.data.length > 0) {
-            const ktTemp = data.temperature.data.find(t => t.place === '觀塘');
-            temp = ktTemp ? ktTemp.value : data.temperature.data[0].value;
-            sourceText = '觀塘區實時氣溫';
-          } else { throw new Error('HKO Array Empty'); }
+        if(data && data.temperature && data.temperature.data) {
+          // 嘗試搵觀塘，如果觀塘站保養緊，就搵最近嘅九龍城或者黃大仙
+          let myStation = data.temperature.data.find(t => t.place === '觀塘') 
+                       || data.temperature.data.find(t => t.place === '九龍城') 
+                       || data.temperature.data.find(t => t.place === '黃大仙')
+                       || data.temperature.data[0];
+                       
+          document.getElementById('weather-temp').innerText = `${myStation.value} °C`;
+          document.getElementById('weather-source').innerText = `${myStation.place}實時氣溫`;
 
-          if(data.humidity && data.humidity.data && data.humidity.data.length > 0) { hum = data.humidity.data[0].value; }
-          if(data.uvindex && data.uvindex.data && data.uvindex.data.length > 0) { uv = data.uvindex.data[0].value; }
-        } catch (hkoError) {
-          const fbRes = await fetch('https://api.open-meteo.com/v1/forecast?latitude=22.3132&longitude=114.2258&current=temperature_2m,relative_humidity_2m&daily=uv_index_max&timezone=Asia%2FHong_Kong');
-          const fbData = await fbRes.json();
-          
-          temp = Math.round(fbData.current.temperature_2m);
-          hum = fbData.current.relative_humidity_2m;
-          
-          const currentHour = new Date().getHours();
-          uv = Math.round(fbData.daily.uv_index_max[0]);
-          if(currentHour >= 18 || currentHour <= 6) uv = 0; 
-          sourceText = '備用氣象數據 (天文台維護中)';
+          if(data.humidity && data.humidity.data.length > 0) {
+            document.getElementById('weather-humidity').innerText = `${data.humidity.data[0].value} %`;
+          }
+
+          let uv = 0;
+          if(data.uvindex && data.uvindex.data.length > 0) {
+            uv = data.uvindex.data[0].value;
+          }
+          document.getElementById('weather-uv').innerText = uv > 0 ? `${uv} (高)` : '0 (低)';
+          document.getElementById('weather-uv').className = uv > 0 ? "text-xl font-bold text-[#D4A373]" : "text-xl font-bold text-[#8BA88E]";
         }
-
-        document.getElementById('weather-temp').innerText = `${temp} °C`;
-        document.getElementById('weather-source').innerText = sourceText;
-        document.getElementById('weather-humidity').innerText = `${hum} %`;
-        document.getElementById('weather-uv').innerText = uv > 0 ? `${uv} (高)` : '0 (低)';
-        document.getElementById('weather-uv').className = uv > 0 ? "text-xl font-bold text-[#D4A373]" : "text-xl font-bold text-[#8BA88E]";
-        
-      } catch (e) { document.getElementById('weather-temp').innerText = "-- °C"; }
+      } catch (e) {
+        document.getElementById('weather-source').innerText = "天文台數據更新中...";
+      }
     }
     setInterval(fetchWeather, 60000); fetchWeather();
 
-    // 3. 新聞功能 (升級：綜合即時新聞 + 直接 XML 解析破緩存)
+    // 3. 穩定版秒速載入新聞 (加入終極破緩存機制)
     async function fetchHKNews() {
       try {
-        // 使用 RTHK 「即時新聞(全部)」確保深夜都有更新，並加上 timestamp 徹底破除緩存
-        const rssUrl = `https://rthk.hk/rthk/news/rss/c_expressnews_btext.xml?_=${Date.now()}`;
-        const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(rssUrl)}`;
+        // 利用 cb 參數強逼伺服器每分鐘當作新網址，徹底破解緩存
+        const cb = Math.floor(Date.now() / 60000); 
+        const rssUrl = `https://rthk.hk/rthk/news/rss/c_expressnews_clocal.xml?cb=${cb}`;
         
-        const res = await fetch(proxyUrl, { cache: 'no-store' });
+        const res = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}`);
         const data = await res.json();
         
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(data.contents, "text/xml");
-        const items = doc.querySelectorAll("item");
-        
-        if (items.length > 0) {
-          let newsHtml = '';
-          let ticker = '';
+        if (data.status === 'ok' && data.items.length > 0) {
+          let newsHtml = '', ticker = '';
+          const topNews = data.items.slice(0, 4);
           
-          for(let i=0; i<Math.min(4, items.length); i++) {
-            const title = items[i].querySelector("title").textContent;
-            const pubDateStr = items[i].querySelector("pubDate").textContent;
-            
-            const d = new Date(pubDateStr.replace(/-/g, '/'));
-            let timeStr = "";
-            if(!isNaN(d.getTime())) {
-              timeStr = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
-            }
+          topNews.forEach(item => {
+            const d = new Date(item.pubDate.replace(/-/g, '/'));
+            let timeStr = !isNaN(d.getTime()) ? `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}` : '';
 
-            newsHtml += `<div class="border-b border-[#4A433D] pb-4 last:border-0"><div class="text-[#F9F8F6] text-base md:text-lg font-bold leading-relaxed mb-2">${title}</div><div class="text-[#A3998F] text-xs flex items-center font-medium"><span class="inline-block w-1.5 h-1.5 bg-[#D4A373] rounded-full mr-2"></span>更新時間: ${timeStr}</div></div>`;
-          }
+            newsHtml += `<div class="border-b border-[#4A433D] pb-4 last:border-0"><div class="text-[#F9F8F6] text-base md:text-lg font-bold leading-relaxed mb-2">${item.title}</div><div class="text-[#A3998F] text-xs flex items-center font-medium"><span class="inline-block w-1.5 h-1.5 bg-[#D4A373] rounded-full mr-2"></span>更新時間: ${timeStr}</div></div>`;
+          });
           document.getElementById('news-list').innerHTML = newsHtml;
           
-          for(let i=0; i<Math.min(8, items.length); i++) {
-            ticker += `• ${items[i].querySelector("title").textContent} 　　`;
-          }
+          data.items.slice(0, 8).forEach(item => { ticker += `• ${item.title} 　　`; });
           document.getElementById('news-ticker').innerHTML = `<span>${ticker}</span><span>${ticker}</span>`;
         }
       } catch (e) {
-        document.getElementById('news-list').innerHTML = '<div class="text-[#D4A373] mt-4">正在同步最新新聞...</div>';
+        document.getElementById('news-list').innerHTML = '<div class="text-[#D4A373] mt-4">正在重新連線至 RTHK...</div>';
       }
     }
-    // 加快新聞獲取頻率，保證新鮮度
     setInterval(fetchHKNews, 60000); fetchHKNews();
   </script>
 </body>
