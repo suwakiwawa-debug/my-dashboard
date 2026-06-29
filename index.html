@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>智能家居儀表板 - 天氣與新聞版</title>
+  <title>智能家居儀表板 - 穩定新聞版</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     body { background-color: #000000; }
@@ -21,7 +21,7 @@
       font-family: 'Courier New', Courier, monospace;
       font-weight: bold;
     }
-    /* 隱藏滾動條但保留滾動功能 */
+    /* 隱藏滾動條 */
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
   </style>
@@ -59,13 +59,13 @@
 
     <div class="bg-gray-900 border-2 border-gray-700 rounded-xl p-6 flex flex-col shadow-lg overflow-hidden">
       <div class="flex justify-between items-center mb-4">
-        <div class="text-orange-400 text-xs font-bold tracking-wider">NOW NEWS HIGHLIGHTS</div>
+        <div class="text-orange-400 text-xs font-bold tracking-wider">HK NEWS HIGHLIGHTS</div>
         <div class="text-xs bg-orange-600 text-white px-2 py-0.5 rounded animate-pulse">LIVE</div>
       </div>
       
-      <div id="now-news-list" class="flex-1 flex flex-col space-y-4 overflow-y-auto no-scrollbar">
+      <div id="news-list" class="flex-1 flex flex-col space-y-4 overflow-y-auto no-scrollbar">
         <div class="flex items-center justify-center h-full">
-          <span class="text-gray-500 pixel-font">正在載入新聞...</span>
+          <span class="text-gray-500 pixel-font">正在連接香港電台新聞中心...</span>
         </div>
       </div>
     </div>
@@ -76,7 +76,7 @@
     <div class="relative w-full flex items-center overflow-hidden">
       <span class="absolute left-0 bg-orange-500 text-black font-black px-3 py-1 text-sm z-10 shadow-md">焦點資訊</span>
       <div class="ticker-track text-base text-gray-100 font-medium" id="news-ticker">
-        • 智能家居儀表板天氣系統運作正常 • 正在為您更新 Now 新聞港聞摘要...
+        • 智能家居儀表板天氣系統運作正常 • 正在為您更新即時港聞摘要...
       </div>
     </div>
   </div>
@@ -124,28 +124,27 @@
           }
         }
       } catch (error) { 
-        document.getElementById('weather-temp').innerText = "獲取失敗";
+        document.getElementById('weather-temp').innerText = "連線中";
       }
     }
     setInterval(fetchWeather, 60000); fetchWeather();
   </script>
 
   <script>
-    async function fetchNowNews() {
+    async function fetchHKNews() {
       try {
-        // 使用免費 API 將 Now 新聞 (港聞) 的 RSS 轉為可讀數據
-        const rssUrl = encodeURIComponent('https://news.now.com/rss/local');
+        // 轉用極穩定的 RTHK 即時港聞 RSS
+        const rssUrl = encodeURIComponent('https://rthk.hk/rthk/news/rss/c_expressnews_clocal.xml');
         const res = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${rssUrl}`);
         const data = await res.json();
         
         if (data.status === 'ok' && data.items.length > 0) {
-          // 只抽取最新 3 條新聞，以免超出畫面
+          // 抽取最新 3 條新聞
           const topNews = data.items.slice(0, 3);
           
           let newsHtml = '';
           topNews.forEach(item => {
-            // 格式化時間 (去除秒數)
-            const pubTime = new Date(item.pubDate.replace(/-/g, '/'));
+            const pubTime = new Date(item.pubDate);
             const timeString = `${String(pubTime.getHours()).padStart(2, '0')}:${String(pubTime.getMinutes()).padStart(2, '0')}`;
             
             newsHtml += `
@@ -159,20 +158,20 @@
             `;
           });
           
-          document.getElementById('now-news-list').innerHTML = newsHtml;
+          document.getElementById('news-list').innerHTML = newsHtml;
           
-          // 順便更新埋最底嘅走馬燈
+          // 更新最底嘅走馬燈
           const allNewsTitles = data.items.slice(0, 8).map(item => `• ${item.title} `).join('     ');
           document.getElementById('news-ticker').innerHTML = `<span>${allNewsTitles}</span><span>${allNewsTitles}</span>`;
         }
       } catch (e) {
-        document.getElementById('now-news-list').innerHTML = '<div class="text-red-400 pixel-font mt-4">無法載入新聞，請檢查網絡連線。</div>';
+        document.getElementById('news-list').innerHTML = '<div class="text-red-400 pixel-font mt-4">無法載入新聞，請檢查網絡連線。</div>';
       }
     }
     
     // 每 5 分鐘自動刷新一次新聞
-    setInterval(fetchNowNews, 300000); 
-    fetchNowNews();
+    setInterval(fetchHKNews, 300000); 
+    fetchHKNews();
   </script>
 </body>
 </html>
