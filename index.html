@@ -3,29 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>智能家居儀表板 - 完美實時版</title>
+  <title>智能家居儀表板 - 資深工程師防禦版</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     body { background-color: #000000; }
-    @keyframes ticker {
-      0% { transform: translate3d(0, 0, 0); }
-      100% { transform: translate3d(-100%, 0, 0); }
-    }
-    .ticker-track {
-      display: inline-block;
-      white-space: nowrap;
-      padding-left: 100%;
-      animation: ticker 30s linear infinite;
-    }
-    .pixel-font {
-      font-family: 'Courier New', Courier, monospace;
-      font-weight: bold;
-    }
+    .pixel-font { font-family: 'Courier New', Courier, monospace; font-weight: bold; }
   </style>
 </head>
 <body class="text-white min-h-screen flex flex-col justify-between overflow-x-hidden select-none">
 
-  <div class="p-4 md:p-6 flex-1 grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 pb-24">
+  <div class="p-4 md:p-6 flex-1 grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 pb-8">
     
     <div class="bg-blue-900 bg-opacity-25 border-2 border-blue-500 rounded-xl p-6 flex flex-col justify-between shadow-lg">
       <div>
@@ -82,4 +69,103 @@
         <div class="flex items-center justify-between">
           <div>
             <span class="bg-red-600 text-white font-bold px-2 py-1 rounded text-lg pixel-font">40A</span>
-            <span class="text-xs text-gray-400 block
+            <span class="text-xs text-gray-400 block mt-1">往 葵興站 (晨早特別線)</span>
+          </div>
+          <div class="text-right">
+            <span class="text-2xl font-bold text-gray-500 pixel-font" id="bus-2-eta">連線中...</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function updateClock() {
+      try {
+        const now = new Date();
+        const optionsDate = { year: 'numeric', month: '2-digit', day: '2-digit', weekday: 'short' };
+        let hours = now.getHours();
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        hours = hours % 12 || 12; 
+        document.getElementById('current-time').innerText = `${hours}:${minutes} ${ampm}`;
+        document.getElementById('current-date').innerText = now.toLocaleDateString('zh-HK', optionsDate).toUpperCase();
+      } catch(e) {
+        document.getElementById('current-time').innerText = "ERROR";
+      }
+    }
+    setInterval(updateClock, 1000); updateClock();
+  </script>
+
+  <script>
+    async function fetchWeather() {
+      try {
+        const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=22.3132&longitude=114.2258&current=temperature_2m,relative_humidity_2m,precipitation,is_day&daily=uv_index_max&timezone=Asia%2FHong_Kong');
+        const data = await res.json();
+        if(data && data.current) {
+          document.getElementById('weather-temp').innerText = `${Math.round(data.current.temperature_2m)} °C`;
+          document.getElementById('weather-humidity').innerText = `${data.current.relative_humidity_2m} %`;
+          
+          const currentRain = data.current.precipitation || 0;
+          const rainLabel = document.getElementById('weather-rain');
+          if (currentRain > 0) {
+            rainLabel.innerText = `有雨 ${currentRain}mm`;
+            rainLabel.className = "text-2xl font-bold text-red-400 pixel-font";
+          } else {
+            rainLabel.innerText = "無雨 0mm";
+            rainLabel.className = "text-2xl font-bold text-emerald-400 pixel-font";
+          }
+
+          if(data.daily && data.daily.uv_index_max) {
+            const uv = Math.round(data.daily.uv_index_max[0]);
+            let uvStr = `${uv}`;
+            if(uv <= 2) uvStr += ' (低)';
+            else if(uv <= 5) uvStr += ' (中)';
+            else uvStr += ' (高)';
+            document.getElementById('weather-uv').innerText = uvStr;
+          }
+        }
+      } catch (error) { 
+        document.getElementById('weather-temp').innerText = "獲取失敗";
+      }
+    }
+    setInterval(fetchWeather, 60000); fetchWeather();
+  </script>
+
+  <script>
+    const MY_BUS_1A_STOP_ID = "63478ED41AD8DDC0";  
+    const MY_BUS_619_STOP_ID = "94FE5329C4EE66A3"; 
+    const MY_BUS_40A_STOP_ID = "3D4C0A620DBF0D3C"; 
+
+    // 建立一個通用嘅安全取車函數
+    async function checkETA(stopId, route, elementId) {
+      try {
+        const res = await fetch(`https://data.etabus.gov.hk/v1/transport/kmb/eta/${stopId}/${route}/1`);
+        const data = await res.json();
+        
+        // 嚴格檢查 API 傳回嚟嘅資料格式是否正確
+        if (data && Array.isArray(data.data)) {
+          const validBuses = data.data.filter(b => b.eta != null);
+          if (validBuses.length > 0) {
+            const diffMins = Math.max(0, Math.round((new Date(validBuses[0].eta) - new Date()) / 1000 / 60));
+            document.getElementById(elementId).innerText = `${diffMins} 分鐘`;
+            return;
+          }
+        }
+        document.getElementById(elementId).innerText = "無班次/已過";
+      } catch (e) {
+        document.getElementById(elementId).innerText = "重試連線中";
+      }
+    }
+
+    async function fetchAllBuses() {
+      await checkETA(MY_BUS_1A_STOP_ID, '1A', 'bus-test-eta');
+      await checkETA(MY_BUS_619_STOP_ID, '619', 'bus-1-eta');
+      await checkETA(MY_BUS_40A_STOP_ID, '40A', 'bus-2-eta');
+    }
+
+    setInterval(fetchAllBuses, 30000); fetchAllBuses();
+  </script>
+</body>
+</html>
