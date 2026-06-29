@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>智能家居儀表板 - 天文台實時版</title>
+  <title>智能家居儀表板 - 24小時不夜城版</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700&display=swap');
@@ -12,7 +12,6 @@
     @keyframes ticker { 0% { transform: translate3d(0, 0, 0); } 100% { transform: translate3d(-100%, 0, 0); } }
     .ticker-track { display: inline-block; white-space: nowrap; padding-left: 100%; animation: ticker 90s linear infinite; }
     
-    /* 太陽慢速自轉 */
     @keyframes wabi-sabi-spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     .animate-sun-slow { animation: wabi-sabi-spin 30s linear infinite; }
 
@@ -36,7 +35,7 @@
         <div id="weather-icon-container" class="flex justify-center items-center h-32 w-32">
           </div>
         <span id="weather-temp" class="text-7xl font-bold text-[#F9F8F6] mt-6 tracking-tighter">-- °C</span>
-        <span id="weather-source" class="text-xs text-[#B3A99F] mt-2 tracking-widest">載入天文台數據中...</span>
+        <span id="weather-source" class="text-xs text-[#B3A99F] mt-2 tracking-widest">連接天文台系統中...</span>
       </div>
 
       <div class="flex justify-between items-center bg-[#2C2824] p-4 rounded-2xl z-10 relative border border-[#4A433D]">
@@ -59,35 +58,33 @@
 
     <div class="bg-[#36302B] rounded-3xl p-8 flex flex-col shadow-2xl border border-[#4A433D] h-[450px] md:h-auto">
       <div class="flex justify-between items-center mb-6">
-        <div class="text-[#B3A99F] text-sm font-bold tracking-widest">RTHK 24H NEWS</div>
+        <div class="text-[#B3A99F] text-sm font-bold tracking-widest">HK 24H NEWS</div>
         <div class="text-xs bg-[#D4A373] text-[#282421] px-3 py-1 rounded-full font-bold animate-pulse">即時</div>
       </div>
       <div id="news-list" class="flex-1 flex flex-col space-y-5 overflow-y-auto no-scrollbar pb-4">
-        <div class="flex items-center justify-center h-full"><span class="text-[#B3A99F]">載入新聞中...</span></div>
+        <div class="flex items-center justify-center h-full"><span class="text-[#B3A99F]">載入最新新聞中...</span></div>
       </div>
     </div>
   </div>
 
   <div class="bg-[#2C2824] border-t border-[#4A433D] fixed bottom-0 left-0 w-full py-4 z-50">
     <div class="relative w-full flex items-center overflow-hidden">
-      <span class="absolute left-0 bg-[#2C2824] text-[#B3A99F] font-bold px-5 py-1 text-sm z-10 shadow-[4px_0_10px_rgba(44,40,36,1)]">最新消息</span>
-      <div class="ticker-track text-base text-[#EAE6DF] font-medium" id="news-ticker">• 系統正在同步資訊...</div>
+      <span class="absolute left-0 bg-[#2C2824] text-[#B3A99F] font-bold px-5 py-1 text-sm z-10 shadow-[4px_0_10px_rgba(44,40,36,1)]">焦點新聞</span>
+      <div class="ticker-track text-base text-[#EAE6DF] font-medium" id="news-ticker">• 系統正在同步 24 小時資訊...</div>
     </div>
   </div>
 
   <script>
-    // 1. 時間與日夜圖標自動切換
+    // 1. 時間與日夜圖標 (月亮已轉為黃色)
     function updateClockAndIcon() {
       try {
         const now = new Date();
         const optionsDate = { year: 'numeric', month: '2-digit', day: '2-digit', weekday: 'short' };
         let hours = now.getHours(), minutes = String(now.getMinutes()).padStart(2, '0'), ampm = hours >= 12 ? 'PM' : 'AM';
         
-        // 更新時鐘
         document.getElementById('current-time').innerText = `${hours % 12 || 12}:${minutes} ${ampm}`;
         document.getElementById('current-date').innerText = now.toLocaleDateString('zh-HK', optionsDate).toUpperCase();
 
-        // 判斷日夜更換 Icon (早上6點至傍晚6點為太陽，其餘為月亮)
         const iconContainer = document.getElementById('weather-icon-container');
         if (hours >= 6 && hours < 18) {
           iconContainer.innerHTML = `
@@ -95,8 +92,9 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
             </svg>`;
         } else {
+          // 修改：將月亮顏色轉為暖黃色 (#F4D03F)
           iconContainer.innerHTML = `
-            <svg class="w-28 h-28 text-[#EAE6DF] drop-shadow-lg animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg class="w-28 h-28 text-[#F4D03F] drop-shadow-lg animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
             </svg>`;
         }
@@ -104,19 +102,42 @@
     }
     setInterval(updateClockAndIcon, 1000); updateClockAndIcon();
 
-    // 2. 100% 堅持使用香港天文台數據
+    // 通用抓取函數 (雙重代理防護)
+    async function fetchWithProxy(targetUrl) {
+      const url1 = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
+      const url2 = `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}`;
+      
+      try {
+        let res = await fetch(url1, { cache: 'no-store' });
+        if(!res.ok) throw new Error();
+        let data = await res.json();
+        return data.contents;
+      } catch(e) {
+        let res2 = await fetch(url2, { cache: 'no-store' });
+        return await res2.text();
+      }
+    }
+
+    // 2. 香港天文台數據 (高強度連線)
     async function fetchWeather() {
       try {
-        const res = await fetch('https://data.weather.gov.hk/weatherAPI/opendata/weather.do?dataType=rhrread&lang=tc');
-        const data = await res.json();
+        const hkoUrl = `https://data.weather.gov.hk/weatherAPI/opendata/weather.do?dataType=rhrread&lang=tc&_=${Date.now()}`;
+        let rawData;
+        
+        try {
+          // 先嘗試直連
+          let directRes = await fetch(hkoUrl, { cache: 'no-store' });
+          if(!directRes.ok) throw new Error();
+          rawData = JSON.stringify(await directRes.json());
+        } catch(e) {
+          // 失敗則啟用代理
+          rawData = await fetchWithProxy(hkoUrl);
+        }
+
+        const data = JSON.parse(rawData);
         
         if(data && data.temperature && data.temperature.data) {
-          // 嘗試搵觀塘，如果觀塘站保養緊，就搵最近嘅九龍城或者黃大仙
-          let myStation = data.temperature.data.find(t => t.place === '觀塘') 
-                       || data.temperature.data.find(t => t.place === '九龍城') 
-                       || data.temperature.data.find(t => t.place === '黃大仙')
-                       || data.temperature.data[0];
-                       
+          let myStation = data.temperature.data.find(t => t.place === '觀塘') || data.temperature.data[0];
           document.getElementById('weather-temp').innerText = `${myStation.value} °C`;
           document.getElementById('weather-source').innerText = `${myStation.place}實時氣溫`;
 
@@ -125,45 +146,59 @@
           }
 
           let uv = 0;
-          if(data.uvindex && data.uvindex.data.length > 0) {
-            uv = data.uvindex.data[0].value;
-          }
+          if(data.uvindex && data.uvindex.data.length > 0) uv = data.uvindex.data[0].value;
           document.getElementById('weather-uv').innerText = uv > 0 ? `${uv} (高)` : '0 (低)';
           document.getElementById('weather-uv').className = uv > 0 ? "text-xl font-bold text-[#D4A373]" : "text-xl font-bold text-[#8BA88E]";
         }
       } catch (e) {
-        document.getElementById('weather-source').innerText = "天文台數據更新中...";
+        document.getElementById('weather-source').innerText = "數據同步中，請稍候...";
       }
     }
     setInterval(fetchWeather, 60000); fetchWeather();
 
-    // 3. 穩定版秒速載入新聞 (加入終極破緩存機制)
+    // 3. 24小時綜合新聞 (Google News HK - 包含各大媒體)
     async function fetchHKNews() {
       try {
-        // 利用 cb 參數強逼伺服器每分鐘當作新網址，徹底破解緩存
-        const cb = Math.floor(Date.now() / 60000); 
-        const rssUrl = `https://rthk.hk/rthk/news/rss/c_expressnews_clocal.xml?cb=${cb}`;
+        const rssUrl = `https://news.google.com/rss/headlines/section/geo/HK?hl=zh-HK&gl=HK&ceid=HK:zh-Hant&_=${Date.now()}`;
+        const xmlText = await fetchWithProxy(rssUrl);
         
-        const res = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}`);
-        const data = await res.json();
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(xmlText, "text/xml");
+        const items = doc.querySelectorAll("item");
         
-        if (data.status === 'ok' && data.items.length > 0) {
+        if (items.length > 0) {
           let newsHtml = '', ticker = '';
-          const topNews = data.items.slice(0, 4);
           
-          topNews.forEach(item => {
-            const d = new Date(item.pubDate.replace(/-/g, '/'));
+          for(let i = 0; i < Math.min(4, items.length); i++) {
+            // 清理標題 (移除過長的媒體名稱後綴)
+            let rawTitle = items[i].querySelector("title").textContent;
+            let cleanTitle = rawTitle.split(' - ')[0]; 
+            let source = rawTitle.split(' - ')[1] || '綜合新聞';
+
+            const d = new Date(items[i].querySelector("pubDate").textContent);
             let timeStr = !isNaN(d.getTime()) ? `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}` : '';
 
-            newsHtml += `<div class="border-b border-[#4A433D] pb-4 last:border-0"><div class="text-[#F9F8F6] text-base md:text-lg font-bold leading-relaxed mb-2">${item.title}</div><div class="text-[#A3998F] text-xs flex items-center font-medium"><span class="inline-block w-1.5 h-1.5 bg-[#D4A373] rounded-full mr-2"></span>更新時間: ${timeStr}</div></div>`;
-          });
+            newsHtml += `
+              <div class="border-b border-[#4A433D] pb-4 last:border-0">
+                <div class="text-[#F9F8F6] text-base md:text-lg font-bold leading-relaxed mb-2">${cleanTitle}</div>
+                <div class="text-[#A3998F] text-xs flex items-center font-medium justify-between">
+                  <div class="flex items-center">
+                    <span class="inline-block w-1.5 h-1.5 bg-[#D4A373] rounded-full mr-2"></span>
+                    ${timeStr}
+                  </div>
+                  <span class="text-[#8BA88E] opacity-80">${source}</span>
+                </div>
+              </div>`;
+          }
           document.getElementById('news-list').innerHTML = newsHtml;
           
-          data.items.slice(0, 8).forEach(item => { ticker += `• ${item.title} 　　`; });
+          for(let i = 0; i < Math.min(8, items.length); i++) { 
+            ticker += `• ${items[i].querySelector("title").textContent.split(' - ')[0]} 　　`; 
+          }
           document.getElementById('news-ticker').innerHTML = `<span>${ticker}</span><span>${ticker}</span>`;
         }
       } catch (e) {
-        document.getElementById('news-list').innerHTML = '<div class="text-[#D4A373] mt-4">正在重新連線至 RTHK...</div>';
+        document.getElementById('news-list').innerHTML = '<div class="text-[#D4A373] mt-4">正在載入最新新聞...</div>';
       }
     }
     setInterval(fetchHKNews, 60000); fetchHKNews();
