@@ -3,16 +3,32 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>智能家居儀表板 - 資深工程師防禦版</title>
+  <title>智能家居儀表板 - 天氣與新聞版</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     body { background-color: #000000; }
-    .pixel-font { font-family: 'Courier New', Courier, monospace; font-weight: bold; }
+    @keyframes ticker {
+      0% { transform: translate3d(0, 0, 0); }
+      100% { transform: translate3d(-100%, 0, 0); }
+    }
+    .ticker-track {
+      display: inline-block;
+      white-space: nowrap;
+      padding-left: 100%;
+      animation: ticker 40s linear infinite;
+    }
+    .pixel-font {
+      font-family: 'Courier New', Courier, monospace;
+      font-weight: bold;
+    }
+    /* 隱藏滾動條但保留滾動功能 */
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
   </style>
 </head>
-<body class="text-white min-h-screen flex flex-col justify-between overflow-x-hidden select-none">
+<body class="text-white min-h-screen flex flex-col justify-between overflow-hidden select-none">
 
-  <div class="p-4 md:p-6 flex-1 grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 pb-8">
+  <div class="p-4 md:p-6 flex-1 grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 pb-20">
     
     <div class="bg-blue-900 bg-opacity-25 border-2 border-blue-500 rounded-xl p-6 flex flex-col justify-between shadow-lg">
       <div>
@@ -41,41 +57,26 @@
       </div>
     </div>
 
-    <div class="bg-gray-900 border-2 border-gray-700 rounded-xl p-6 flex flex-col shadow-lg">
-      <div class="text-orange-400 text-xs font-bold tracking-wider mb-4">HK BUS STATION HUB</div>
+    <div class="bg-gray-900 border-2 border-gray-700 rounded-xl p-6 flex flex-col shadow-lg overflow-hidden">
+      <div class="flex justify-between items-center mb-4">
+        <div class="text-orange-400 text-xs font-bold tracking-wider">NOW NEWS HIGHLIGHTS</div>
+        <div class="text-xs bg-orange-600 text-white px-2 py-0.5 rounded animate-pulse">LIVE</div>
+      </div>
       
-      <div class="flex-1 flex flex-col justify-around space-y-4">
-        
-        <div class="flex items-center justify-between border-b border-gray-800 pb-3">
-          <div>
-            <span class="bg-yellow-500 text-black font-bold px-2 py-1 rounded text-lg pixel-font">1A</span>
-            <span class="text-xs text-gray-400 block mt-1">往 尖沙咀碼頭 (系統測試)</span>
-          </div>
-          <div class="text-right">
-            <span class="text-2xl font-bold text-green-400 pixel-font" id="bus-test-eta">連線中...</span>
-          </div>
+      <div id="now-news-list" class="flex-1 flex flex-col space-y-4 overflow-y-auto no-scrollbar">
+        <div class="flex items-center justify-center h-full">
+          <span class="text-gray-500 pixel-font">正在載入新聞...</span>
         </div>
+      </div>
+    </div>
 
-        <div class="flex items-center justify-between border-b border-gray-800 pb-3">
-          <div>
-            <span class="bg-red-600 text-white font-bold px-2 py-1 rounded text-lg pixel-font">619</span>
-            <span class="text-xs text-gray-400 block mt-1">往 中環 (聯營線/九巴時段)</span>
-          </div>
-          <div class="text-right">
-            <span class="text-2xl font-bold text-green-400 pixel-font" id="bus-1-eta">連線中...</span>
-          </div>
-        </div>
+  </div>
 
-        <div class="flex items-center justify-between">
-          <div>
-            <span class="bg-red-600 text-white font-bold px-2 py-1 rounded text-lg pixel-font">40A</span>
-            <span class="text-xs text-gray-400 block mt-1">往 葵興站 (晨早特別線)</span>
-          </div>
-          <div class="text-right">
-            <span class="text-2xl font-bold text-gray-500 pixel-font" id="bus-2-eta">連線中...</span>
-          </div>
-        </div>
-
+  <div class="bg-gray-950 border-t-2 border-orange-500 fixed bottom-0 left-0 w-full py-3 z-50">
+    <div class="relative w-full flex items-center overflow-hidden">
+      <span class="absolute left-0 bg-orange-500 text-black font-black px-3 py-1 text-sm z-10 shadow-md">焦點資訊</span>
+      <div class="ticker-track text-base text-gray-100 font-medium" id="news-ticker">
+        • 智能家居儀表板天氣系統運作正常 • 正在為您更新 Now 新聞港聞摘要...
       </div>
     </div>
   </div>
@@ -91,9 +92,7 @@
         hours = hours % 12 || 12; 
         document.getElementById('current-time').innerText = `${hours}:${minutes} ${ampm}`;
         document.getElementById('current-date').innerText = now.toLocaleDateString('zh-HK', optionsDate).toUpperCase();
-      } catch(e) {
-        document.getElementById('current-time').innerText = "ERROR";
-      }
+      } catch(e) {}
     }
     setInterval(updateClock, 1000); updateClock();
   </script>
@@ -106,7 +105,6 @@
         if(data && data.current) {
           document.getElementById('weather-temp').innerText = `${Math.round(data.current.temperature_2m)} °C`;
           document.getElementById('weather-humidity').innerText = `${data.current.relative_humidity_2m} %`;
-          
           const currentRain = data.current.precipitation || 0;
           const rainLabel = document.getElementById('weather-rain');
           if (currentRain > 0) {
@@ -116,7 +114,6 @@
             rainLabel.innerText = "無雨 0mm";
             rainLabel.className = "text-2xl font-bold text-emerald-400 pixel-font";
           }
-
           if(data.daily && data.daily.uv_index_max) {
             const uv = Math.round(data.daily.uv_index_max[0]);
             let uvStr = `${uv}`;
@@ -134,38 +131,48 @@
   </script>
 
   <script>
-    const MY_BUS_1A_STOP_ID = "63478ED41AD8DDC0";  
-    const MY_BUS_619_STOP_ID = "94FE5329C4EE66A3"; 
-    const MY_BUS_40A_STOP_ID = "3D4C0A620DBF0D3C"; 
-
-    // 建立一個通用嘅安全取車函數
-    async function checkETA(stopId, route, elementId) {
+    async function fetchNowNews() {
       try {
-        const res = await fetch(`https://data.etabus.gov.hk/v1/transport/kmb/eta/${stopId}/${route}/1`);
+        // 使用免費 API 將 Now 新聞 (港聞) 的 RSS 轉為可讀數據
+        const rssUrl = encodeURIComponent('https://news.now.com/rss/local');
+        const res = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${rssUrl}`);
         const data = await res.json();
         
-        // 嚴格檢查 API 傳回嚟嘅資料格式是否正確
-        if (data && Array.isArray(data.data)) {
-          const validBuses = data.data.filter(b => b.eta != null);
-          if (validBuses.length > 0) {
-            const diffMins = Math.max(0, Math.round((new Date(validBuses[0].eta) - new Date()) / 1000 / 60));
-            document.getElementById(elementId).innerText = `${diffMins} 分鐘`;
-            return;
-          }
+        if (data.status === 'ok' && data.items.length > 0) {
+          // 只抽取最新 3 條新聞，以免超出畫面
+          const topNews = data.items.slice(0, 3);
+          
+          let newsHtml = '';
+          topNews.forEach(item => {
+            // 格式化時間 (去除秒數)
+            const pubTime = new Date(item.pubDate.replace(/-/g, '/'));
+            const timeString = `${String(pubTime.getHours()).padStart(2, '0')}:${String(pubTime.getMinutes()).padStart(2, '0')}`;
+            
+            newsHtml += `
+              <div class="border-b border-gray-800 pb-3 last:border-0">
+                <div class="text-white text-base md:text-lg font-medium leading-snug mb-1">${item.title}</div>
+                <div class="text-gray-500 text-xs flex items-center">
+                  <span class="inline-block w-2 h-2 bg-orange-500 rounded-full mr-2"></span>
+                  更新時間: ${timeString}
+                </div>
+              </div>
+            `;
+          });
+          
+          document.getElementById('now-news-list').innerHTML = newsHtml;
+          
+          // 順便更新埋最底嘅走馬燈
+          const allNewsTitles = data.items.slice(0, 8).map(item => `• ${item.title} `).join('     ');
+          document.getElementById('news-ticker').innerHTML = `<span>${allNewsTitles}</span><span>${allNewsTitles}</span>`;
         }
-        document.getElementById(elementId).innerText = "無班次/已過";
       } catch (e) {
-        document.getElementById(elementId).innerText = "重試連線中";
+        document.getElementById('now-news-list').innerHTML = '<div class="text-red-400 pixel-font mt-4">無法載入新聞，請檢查網絡連線。</div>';
       }
     }
-
-    async function fetchAllBuses() {
-      await checkETA(MY_BUS_1A_STOP_ID, '1A', 'bus-test-eta');
-      await checkETA(MY_BUS_619_STOP_ID, '619', 'bus-1-eta');
-      await checkETA(MY_BUS_40A_STOP_ID, '40A', 'bus-2-eta');
-    }
-
-    setInterval(fetchAllBuses, 30000); fetchAllBuses();
+    
+    // 每 5 分鐘自動刷新一次新聞
+    setInterval(fetchNowNews, 300000); 
+    fetchNowNews();
   </script>
 </body>
 </html>
