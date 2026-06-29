@@ -15,9 +15,9 @@
     @keyframes wabi-sabi-spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     .animate-sun-slow { animation: wabi-sabi-spin 30s linear infinite; }
 
-    /* 隱藏滾動條但保留滾動功能 */
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    .pixel-font { font-family: 'Courier New', Courier, monospace; font-weight: bold; }
   </style>
 </head>
 <body class="min-h-screen flex flex-col overflow-x-hidden select-none pb-16">
@@ -62,7 +62,7 @@
 
     <div class="bg-[#36302B] rounded-3xl p-8 flex flex-col shadow-2xl border border-[#4A433D] h-[450px] md:h-auto">
       <div class="flex justify-between items-center mb-6">
-        <div class="text-[#B3A99F] text-sm font-bold tracking-widest">RTHK NEWS</div>
+        <div class="text-[#B3A99F] text-sm font-bold tracking-widest">RTHK 24H NEWS</div>
         <div class="text-xs bg-[#D4A373] text-[#282421] px-3 py-1 rounded-full font-bold animate-pulse">即時</div>
       </div>
       <div id="news-list" class="flex-1 flex flex-col space-y-5 overflow-y-auto no-scrollbar pb-4">
@@ -92,32 +92,25 @@
     }
     setInterval(updateClock, 1000); updateClock();
 
-    // 2. 天氣功能 (加入極強大防崩潰 Fallback 機制)
+    // 2. 天氣功能 (強效防禦機制)
     async function fetchWeather() {
       try {
         let temp = '--', hum = '--', uv = 0, sourceText = '';
         
         try {
-          // 嘗試讀取天文台
           const res = await fetch('https://data.weather.gov.hk/weatherAPI/opendata/weather.do?dataType=rhrread&lang=tc');
           if (!res.ok) throw new Error('HKO Error');
           const data = await res.json();
           
-          // 嚴格檢查數據是否存在 (防禦凌晨 00:01 數據重置崩潰)
           if(data && data.temperature && data.temperature.data && data.temperature.data.length > 0) {
             const ktTemp = data.temperature.data.find(t => t.place === '觀塘');
             temp = ktTemp ? ktTemp.value : data.temperature.data[0].value;
             sourceText = '觀塘區實時氣溫';
           } else { throw new Error('HKO Array Empty'); }
 
-          if(data.humidity && data.humidity.data && data.humidity.data.length > 0) {
-            hum = data.humidity.data[0].value;
-          }
-          if(data.uvindex && data.uvindex.data && data.uvindex.data.length > 0) {
-            uv = data.uvindex.data[0].value;
-          }
+          if(data.humidity && data.humidity.data && data.humidity.data.length > 0) { hum = data.humidity.data[0].value; }
+          if(data.uvindex && data.uvindex.data && data.uvindex.data.length > 0) { uv = data.uvindex.data[0].value; }
         } catch (hkoError) {
-          // 天文台出錯，無縫切換備用國際數據庫
           const fbRes = await fetch('https://api.open-meteo.com/v1/forecast?latitude=22.3132&longitude=114.2258&current=temperature_2m,relative_humidity_2m&daily=uv_index_max&timezone=Asia%2FHong_Kong');
           const fbData = await fbRes.json();
           
@@ -126,52 +119,63 @@
           
           const currentHour = new Date().getHours();
           uv = Math.round(fbData.daily.uv_index_max[0]);
-          if(currentHour >= 18 || currentHour <= 6) uv = 0; // 夜晚強制無 UV
+          if(currentHour >= 18 || currentHour <= 6) uv = 0; 
           sourceText = '備用氣象數據 (天文台維護中)';
         }
 
-        // 渲染畫面
         document.getElementById('weather-temp').innerText = `${temp} °C`;
         document.getElementById('weather-source').innerText = sourceText;
         document.getElementById('weather-humidity').innerText = `${hum} %`;
         document.getElementById('weather-uv').innerText = uv > 0 ? `${uv} (高)` : '0 (低)';
         document.getElementById('weather-uv').className = uv > 0 ? "text-xl font-bold text-[#D4A373]" : "text-xl font-bold text-[#8BA88E]";
         
-      } catch (e) {
-        document.getElementById('weather-temp').innerText = "-- °C";
-      }
+      } catch (e) { document.getElementById('weather-temp').innerText = "-- °C"; }
     }
     setInterval(fetchWeather, 60000); fetchWeather();
 
-    // 3. 新聞功能
+    // 3. 新聞功能 (升級：綜合即時新聞 + 直接 XML 解析破緩存)
     async function fetchHKNews() {
       try {
-        const ts = Math.floor(Date.now() / 600000); 
-        const rssUrl = encodeURIComponent(`https://rthk.hk/rthk/news/rss/c_expressnews_clocal.xml?v=${ts}`);
-        const res = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${rssUrl}`);
+        // 使用 RTHK 「即時新聞(全部)」確保深夜都有更新，並加上 timestamp 徹底破除緩存
+        const rssUrl = `https://rthk.hk/rthk/news/rss/c_expressnews_btext.xml?_=${Date.now()}`;
+        const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(rssUrl)}`;
+        
+        const res = await fetch(proxyUrl, { cache: 'no-store' });
         const data = await res.json();
         
-        if (data.status === 'ok' && data.items.length > 0) {
-          let newsHtml = '', ticker = '';
-          const topNews = data.items.slice(0, 4); // 顯示 4 條新聞
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(data.contents, "text/xml");
+        const items = doc.querySelectorAll("item");
+        
+        if (items.length > 0) {
+          let newsHtml = '';
+          let ticker = '';
           
-          topNews.forEach(item => {
-            const pubDateStr = item.pubDate.replace(/-/g, '/');
-            const d = new Date(pubDateStr);
-            let timeStr = !isNaN(d.getTime()) ? `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}` : '';
+          for(let i=0; i<Math.min(4, items.length); i++) {
+            const title = items[i].querySelector("title").textContent;
+            const pubDateStr = items[i].querySelector("pubDate").textContent;
+            
+            const d = new Date(pubDateStr.replace(/-/g, '/'));
+            let timeStr = "";
+            if(!isNaN(d.getTime())) {
+              timeStr = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+            }
 
-            newsHtml += `<div class="border-b border-[#4A433D] pb-4 last:border-0"><div class="text-[#F9F8F6] text-base md:text-lg font-bold leading-relaxed mb-2">${item.title}</div><div class="text-[#A3998F] text-xs flex items-center font-medium"><span class="inline-block w-1.5 h-1.5 bg-[#D4A373] rounded-full mr-2"></span>更新時間: ${timeStr}</div></div>`;
-          });
+            newsHtml += `<div class="border-b border-[#4A433D] pb-4 last:border-0"><div class="text-[#F9F8F6] text-base md:text-lg font-bold leading-relaxed mb-2">${title}</div><div class="text-[#A3998F] text-xs flex items-center font-medium"><span class="inline-block w-1.5 h-1.5 bg-[#D4A373] rounded-full mr-2"></span>更新時間: ${timeStr}</div></div>`;
+          }
           document.getElementById('news-list').innerHTML = newsHtml;
           
-          data.items.slice(0, 8).forEach(item => { ticker += `• ${item.title} 　　`; });
+          for(let i=0; i<Math.min(8, items.length); i++) {
+            ticker += `• ${items[i].querySelector("title").textContent} 　　`;
+          }
           document.getElementById('news-ticker').innerHTML = `<span>${ticker}</span><span>${ticker}</span>`;
         }
       } catch (e) {
-        document.getElementById('news-list').innerHTML = '<div class="text-[#D4A373] mt-4">無法讀取，請檢查連線。</div>';
+        document.getElementById('news-list').innerHTML = '<div class="text-[#D4A373] mt-4">正在同步最新新聞...</div>';
       }
     }
-    setInterval(fetchHKNews, 300000); fetchHKNews();
+    // 加快新聞獲取頻率，保證新鮮度
+    setInterval(fetchHKNews, 60000); fetchHKNews();
   </script>
 </body>
 </html>
