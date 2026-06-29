@@ -3,174 +3,121 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>智能家居儀表板 - 深色日系版</title>
+  <title>智能家居儀表板 - 大圖主角版</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700&display=swap');
-    
-    body { 
-      background-color: #282421; /* 深焙咖啡色背景 */
-      font-family: 'Zen Maru Gothic', sans-serif; 
-      color: #EAE6DF; /* 燕麥白文字 */
-    }
-    @keyframes ticker {
-      0% { transform: translate3d(0, 0, 0); }
-      100% { transform: translate3d(-100%, 0, 0); }
-    }
-    .ticker-track {
-      display: inline-block;
-      white-space: nowrap;
-      padding-left: 100%;
-      animation: ticker 40s linear infinite;
-    }
+    body { background-color: #282421; font-family: 'Zen Maru Gothic', sans-serif; color: #EAE6DF; }
+    @keyframes ticker { 0% { transform: translate3d(0, 0, 0); } 100% { transform: translate3d(-100%, 0, 0); } }
+    .ticker-track { display: inline-block; white-space: nowrap; padding-left: 100%; animation: ticker 40s linear infinite; }
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    .pixel-font { font-family: 'Courier New', Courier, monospace; font-weight: bold; }
   </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between overflow-hidden select-none">
-
-  <!-- 主體內容區 -->
   <div class="p-5 md:p-8 flex-1 grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 pb-20">
     
-    <!-- 左邊：時間與即時天氣 -->
-    <div class="bg-[#36302B] rounded-3xl p-8 flex flex-col justify-between shadow-2xl border border-[#4A433D]">
-      <div>
-        <div class="text-[#B3A99F] text-sm font-bold tracking-widest mb-3">TODAY</div>
-        <div id="current-time" class="text-6xl md:text-7xl font-bold text-[#F9F8F6] tracking-tight">--:-- --</div>
-        <div id="current-date" class="text-base text-[#B3A99F] mt-3 font-medium">----/--/-- ---</div>
+    <div class="bg-[#36302B] rounded-3xl p-8 flex flex-col justify-between shadow-2xl border border-[#4A433D] relative overflow-hidden">
+      <div class="flex justify-between items-start z-10 relative">
+        <div>
+          <div id="current-time" class="text-5xl font-bold text-[#F9F8F6] tracking-tight">--:-- --</div>
+          <div id="current-date" class="text-sm text-[#B3A99F] mt-1 font-medium">----/--/-- ---</div>
+        </div>
       </div>
 
-      <div class="mt-10 space-y-5">
-        <div class="flex items-center justify-between">
-          <span class="text-[#B3A99F] text-lg">氣溫</span>
-          <span id="weather-temp" class="text-4xl font-bold text-[#F9F8F6]">-- °C</span>
+      <div class="flex flex-col items-center justify-center my-8 z-10 relative">
+        <svg class="w-32 h-32 text-[#D4A373] drop-shadow-lg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+        </svg>
+        <span id="weather-temp" class="text-7xl font-bold text-[#F9F8F6] mt-4">-- °C</span>
+      </div>
+
+      <div class="flex justify-between items-center bg-[#2C2824] p-4 rounded-2xl z-10 relative border border-[#4A433D]">
+        <div class="text-center">
+          <div class="text-[#B3A99F] text-xs mb-1">濕度</div>
+          <div id="weather-humidity" class="text-xl font-bold text-[#8BA88E]">-- %</div>
         </div>
-        <div class="flex items-center justify-between">
-          <span class="text-[#B3A99F] text-lg">濕度</span>
-          <span id="weather-humidity" class="text-3xl font-bold text-[#8BA88E]">-- %</span>
+        <div class="w-px h-8 bg-[#4A433D]"></div>
+        <div class="text-center">
+          <div class="text-[#B3A99F] text-xs mb-1">紫外線</div>
+          <div id="weather-uv" class="text-xl font-bold text-[#D4A373]">--</div>
         </div>
-        <div class="flex items-center justify-between">
-          <span class="text-[#B3A99F] text-lg">紫外線</span>
-          <span id="weather-uv" class="text-2xl font-bold text-[#D4A373]">--</span>
-        </div>
-        <div class="flex items-center justify-between border-t border-[#4A433D] pt-4">
-          <span class="text-[#B3A99F] text-lg">降雨</span>
-          <span id="weather-rain" class="text-2xl font-bold text-[#8BA88E]">--</span>
+        <div class="w-px h-8 bg-[#4A433D]"></div>
+        <div class="text-center">
+          <div class="text-[#B3A99F] text-xs mb-1">降雨</div>
+          <div id="weather-rain" class="text-xl font-bold text-[#8BA88E]">--</div>
         </div>
       </div>
     </div>
 
-    <!-- 右邊：香港電台即時新聞區塊 -->
     <div class="bg-[#36302B] rounded-3xl p-8 flex flex-col shadow-2xl border border-[#4A433D] overflow-hidden">
       <div class="flex justify-between items-center mb-6">
         <div class="text-[#B3A99F] text-sm font-bold tracking-widest">RTHK NEWS</div>
         <div class="text-xs bg-[#D4A373] text-[#282421] px-3 py-1 rounded-full font-bold animate-pulse">即時</div>
       </div>
-      
-      <!-- 新聞列表容器 -->
       <div id="news-list" class="flex-1 flex flex-col space-y-5 overflow-y-auto no-scrollbar">
-        <div class="flex items-center justify-center h-full">
-          <span class="text-[#B3A99F]">正在讀取新聞...</span>
-        </div>
+        <div class="flex items-center justify-center h-full"><span class="text-[#B3A99F]">正在讀取新聞...</span></div>
       </div>
     </div>
-
   </div>
 
-  <!-- 底部：走馬燈 -->
   <div class="bg-[#2C2824] border-t border-[#4A433D] fixed bottom-0 left-0 w-full py-4 z-50">
     <div class="relative w-full flex items-center overflow-hidden">
-      <span class="absolute left-0 bg-[#2C2824] text-[#B3A99F] font-bold px-5 py-1 text-sm z-10 shadow-[4px_0_10px_rgba(44,40,36,1)]">最新消息</span>
-      <div class="ticker-track text-base text-[#EAE6DF] font-medium" id="news-ticker">
-        • 深色日系面板已套用 • 正在為您更新即時港聞摘要...
-      </div>
+      <span class="absolute left-0 bg-[#2C2824] text-[#B3A99F] font-bold px-5 py-1 text-sm z-10">最新消息</span>
+      <div class="ticker-track text-base text-[#EAE6DF] font-medium" id="news-ticker">• 大圖主角版已套用 •</div>
     </div>
   </div>
 
-  <!-- 模組 1：時鐘系統 -->
   <script>
     function updateClock() {
       try {
         const now = new Date();
         const optionsDate = { year: 'numeric', month: '2-digit', day: '2-digit', weekday: 'short' };
-        let hours = now.getHours();
-        const minutes = String(now.getMinutes()).padStart(2, '0');
-        const ampm = hours >= 12 ? 'PM' : 'AM';
+        let hours = now.getHours(), minutes = String(now.getMinutes()).padStart(2, '0'), ampm = hours >= 12 ? 'PM' : 'AM';
         hours = hours % 12 || 12; 
         document.getElementById('current-time').innerText = `${hours}:${minutes} ${ampm}`;
         document.getElementById('current-date').innerText = now.toLocaleDateString('zh-HK', optionsDate).toUpperCase();
       } catch(e) {}
     }
     setInterval(updateClock, 1000); updateClock();
-  </script>
 
-  <!-- 模組 2：天氣系統 -->
-  <script>
     async function fetchWeather() {
       try {
         const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=22.3132&longitude=114.2258&current=temperature_2m,relative_humidity_2m,precipitation,is_day&daily=uv_index_max&timezone=Asia%2FHong_Kong');
         const data = await res.json();
         if(data && data.current) {
-          document.getElementById('weather-temp').innerText = `${Math.round(data.current.temperature_2m)} °C`;
-          document.getElementById('weather-humidity').innerText = `${data.current.relative_humidity_2m} %`;
-          const currentRain = data.current.precipitation || 0;
-          const rainLabel = document.getElementById('weather-rain');
-          if (currentRain > 0) {
-            rainLabel.innerText = `有雨 ${currentRain}mm`;
-            rainLabel.className = "text-2xl font-bold text-[#D4A373]";
-          } else {
-            rainLabel.innerText = "無雨 0mm";
-            rainLabel.className = "text-2xl font-bold text-[#8BA88E]";
-          }
+          document.getElementById('weather-temp').innerText = `${Math.round(data.current.temperature_2m)}°C`;
+          document.getElementById('weather-humidity').innerText = `${data.current.relative_humidity_2m}%`;
+          const rain = data.current.precipitation || 0;
+          document.getElementById('weather-rain').innerText = rain > 0 ? `${rain}mm` : `0mm`;
+          document.getElementById('weather-rain').className = rain > 0 ? "text-xl font-bold text-[#D4A373]" : "text-xl font-bold text-[#8BA88E]";
           if(data.daily && data.daily.uv_index_max) {
-            const uv = Math.round(data.daily.uv_index_max[0]);
-            let uvStr = `${uv}`;
-            if(uv <= 2) uvStr += ' (低)';
-            else if(uv <= 5) uvStr += ' (中)';
-            else uvStr += ' (高)';
-            document.getElementById('weather-uv').innerText = uvStr;
+            document.getElementById('weather-uv').innerText = Math.round(data.daily.uv_index_max[0]);
           }
         }
-      } catch (error) { 
-        document.getElementById('weather-temp').innerText = "連線中";
-      }
+      } catch (e) { document.getElementById('weather-temp').innerText = "連線中"; }
     }
     setInterval(fetchWeather, 60000); fetchWeather();
-  </script>
 
-  <!-- 模組 3：香港電台 (RTHK) 新聞系統 -->
-  <script>
     async function fetchHKNews() {
       try {
         const rssUrl = encodeURIComponent('https://rthk.hk/rthk/news/rss/c_expressnews_clocal.xml');
         const res = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${rssUrl}`);
         const data = await res.json();
-        
         if (data.status === 'ok' && data.items.length > 0) {
           const topNews = data.items.slice(0, 3);
           let newsHtml = '';
           topNews.forEach(item => {
             const pubTime = new Date(item.pubDate);
             const timeString = `${String(pubTime.getHours()).padStart(2, '0')}:${String(pubTime.getMinutes()).padStart(2, '0')}`;
-            
-            newsHtml += `
-              <div class="border-b border-[#4A433D] pb-4 last:border-0">
-                <div class="text-[#F9F8F6] text-base md:text-lg font-bold leading-relaxed mb-2">${item.title}</div>
-                <div class="text-[#A3998F] text-xs flex items-center font-medium">
-                  <span class="inline-block w-1.5 h-1.5 bg-[#D4A373] rounded-full mr-2"></span>
-                  更新時間: ${timeString}
-                </div>
-              </div>
-            `;
+            newsHtml += `<div class="border-b border-[#4A433D] pb-4 last:border-0"><div class="text-[#F9F8F6] text-base md:text-lg font-bold leading-relaxed mb-2">${item.title}</div><div class="text-[#A3998F] text-xs flex items-center font-medium"><span class="inline-block w-1.5 h-1.5 bg-[#D4A373] rounded-full mr-2"></span>更新時間: ${timeString}</div></div>`;
           });
           document.getElementById('news-list').innerHTML = newsHtml;
-          
           const allNewsTitles = data.items.slice(0, 8).map(item => `• ${item.title} `).join('     ');
           document.getElementById('news-ticker').innerHTML = `<span>${allNewsTitles}</span><span>${allNewsTitles}</span>`;
         }
-      } catch (e) {
-        document.getElementById('news-list').innerHTML = '<div class="text-[#D4A373] mt-4">無法載入新聞，請檢查網絡連線。</div>';
-      }
+      } catch (e) {}
     }
     setInterval(fetchHKNews, 300000); fetchHKNews();
   </script>
